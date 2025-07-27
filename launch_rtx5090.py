@@ -27,4 +27,5 @@ sys.argv.extend(rtx5090_args)
 
 # Run the main launch script
 if __name__ == '__main__':
-    launch
+    # Import after setting environment variables
+    exec(open('launch.py').read())

@@ -64,10 +64,24 @@ def run(command, desc=None, errdesc=None, custom_env=None, live: bool = default_
     return (result.stdout or "")
 
 
+def is_uv_available():
+    """Check if UV is available in the system."""
+    return shutil.which('uv') is not None
+
+
 def run_pip(command, desc=None, live=default_command_live):
+    """Run pip command using UV."""
+    if not is_uv_available():
+        print("\n" + "="*60)
+        print("ERROR: UV is required but not installed.")
+        print("Please install UV by running:")
+        print("  curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print("="*60 + "\n")
+        sys.exit(1)
+    
     try:
         index_url_line = f' --index-url {index_url}' if index_url != '' else ''
-        return run(f'"{python}" -m pip {command} --prefer-binary{index_url_line}', desc=f"Installing {desc}",
+        return run(f'uv pip {command} --prefer-binary{index_url_line}', desc=f"Installing {desc}",
                    errdesc=f"Couldn't install {desc}", live=live)
     except Exception as e:
         print(e)

@@ -19,7 +19,7 @@ import platform
 import fooocus_version
 
 from build_launcher import build_launcher
-from modules.launch_util import is_installed, run, python, run_pip, requirements_met, delete_folder_content
+from modules.launch_util import is_installed, run, python, run_pip, requirements_met, delete_folder_content, is_uv_available
 from modules.model_loader import load_file_from_url
 
 REINSTALL_ALL = False
@@ -27,25 +27,34 @@ TRY_INSTALL_XFORMERS = False
 
 
 def prepare_environment():
+    # Check UV is available first
+    if not is_uv_available():
+        print("\n" + "="*60)
+        print("ERROR: UV is required to run Fooocus.")
+        print("Please install UV by running:")
+        print("  curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print("="*60 + "\n")
+        sys.exit(1)
+    
     # Check for RTX 5090 environment variable
     use_rtx5090 = os.environ.get('USE_RTX5090', 'false').lower() == 'true'
     
     if use_rtx5090:
         torch_index_url = os.environ.get('TORCH_INDEX_URL', "https://download.pytorch.org/whl/nightly/cu128")
         torch_command = os.environ.get('TORCH_COMMAND',
-                                       f"pip install torch==2.9.0.dev20250726+cu128 torchvision==0.21.0.dev20250726+cu128 --index-url {torch_index_url}")
+                                       f"uv pip install torch==2.9.0.dev20250726+cu128 torchvision==0.21.0.dev20250726+cu128 --index-url {torch_index_url}")
         requirements_file = os.environ.get('REQS_FILE', "requirements_rtx5090.txt")
     else:
         torch_index_url = os.environ.get('TORCH_INDEX_URL', "https://download.pytorch.org/whl/cu121")
         torch_command = os.environ.get('TORCH_COMMAND',
-                                       f"pip install torch==2.1.0 torchvision==0.16.0 --extra-index-url {torch_index_url}")
+                                       f"uv pip install torch==2.1.0 torchvision==0.16.0 --extra-index-url {torch_index_url}")
         requirements_file = os.environ.get('REQS_FILE', "requirements_versions.txt")
 
     print(f"Python {sys.version}")
     print(f"Fooocus version: {fooocus_version.version}")
 
     if REINSTALL_ALL or not is_installed("torch") or not is_installed("torchvision"):
-        run(f'"{python}" -m {torch_command}', "Installing torch and torchvision", "Couldn't install torch", live=True)
+        run(torch_command, "Installing torch and torchvision", "Couldn't install torch", live=True)
 
     if TRY_INSTALL_XFORMERS:
         if REINSTALL_ALL or not is_installed("xformers"):
