@@ -36,37 +36,26 @@ This script will:
 
 If you prefer to set up manually:
 
-### 1. Create virtual environment:
+### 1. Set up UV project environment:
 
 ```bash
-python3.12 -m venv venv_rtx5090
-source venv_rtx5090/bin/activate
+# UV will create and manage the virtual environment
+export UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/nightly/cu128"
+uv sync
 ```
 
-### 2. Install PyTorch with CUDA 12.8:
+### 2. Build xformers from source:
 
 ```bash
-pip install torch==2.9.0.dev20250726+cu128 torchvision==0.21.0.dev20250726+cu128 --index-url https://download.pytorch.org/whl/nightly/cu128
+uv run python build_xformers.py
 ```
 
-### 3. Build xformers from source:
-
-```bash
-python build_xformers.py
-```
-
-### 4. Install remaining dependencies:
-
-```bash
-pip install -r requirements_rtx5090.txt
-```
-
-### 5. Launch with RTX 5090 optimizations:
+### 3. Launch with RTX 5090 optimizations:
 
 ```bash
 export USE_RTX5090=true
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
-python launch.py --xformers --opt-sdp-attention --no-half-vae
+uv run python launch.py --xformers --opt-sdp-attention --no-half-vae
 ```
 
 ## Verify Installation
@@ -121,3 +110,5 @@ The RTX 5090 setup includes several optimizations:
 - This setup is compatible with all RTX 50-series GPUs (5080, 5070 Ti, 5070)
 - The custom xformers build is required for SM 120 architecture support
 - Python 3.12+ is required for optimal performance with modern async features
+- UV manages the virtual environment automatically in `.venv`
+- All commands should be run with `uv run` to ensure the correct environment is used

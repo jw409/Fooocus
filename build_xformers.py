@@ -107,7 +107,7 @@ if __name__ == "__main__":
             print("Warning: CUDA not available. xformers will be built for CPU only.")
     except ImportError:
         print("Error: PyTorch must be installed before building xformers")
-        print("Run: pip install torch==2.9.0.dev20250726+cu128 --index-url https://download.pytorch.org/whl/nightly/cu128")
+        print("Run: uv sync")
         sys.exit(1)
     
     build_xformers()

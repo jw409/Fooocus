@@ -36,30 +36,27 @@ else
     echo "UV is already installed"
 fi
 
-# Create virtual environment
+# Check for pyproject.toml
+if [ ! -f "pyproject.toml" ]; then
+    echo "Error: pyproject.toml not found."
+    echo "Please run this script from the Fooocus root directory."
+    exit 1
+fi
+
+# Create UV-managed environment and sync dependencies
 echo ""
-echo "Creating Python 3.12 virtual environment..."
-uv venv --python 3.12 venv_rtx5090
+echo "Setting up UV project environment..."
+echo "UV will create and manage the virtual environment automatically"
 
-# Activate virtual environment
-source venv_rtx5090/bin/activate
+# Set up UV to use the PyTorch nightly index for CUDA 12.8
+export UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/nightly/cu128"
 
-# Upgrade pip
+# Sync the project - this creates .venv and installs all dependencies
 echo ""
-echo "Upgrading pip..."
-python -m pip install --upgrade pip
+echo "Installing all dependencies via UV..."
+uv sync
 
-# Install PyTorch with CUDA 12.8
-echo ""
-echo "Installing PyTorch 2.9.0 with CUDA 12.8 support..."
-pip install torch==2.9.0.dev20250726+cu128 torchvision==0.21.0.dev20250726+cu128 torchaudio==2.9.0.dev20250726+cu128 --index-url https://download.pytorch.org/whl/nightly/cu128
-
-# Install CUDA runtime libraries
-echo ""
-echo "Installing CUDA 12.8 runtime libraries..."
-pip install nvidia-cuda-runtime-cu12>=12.8.0 nvidia-cudnn-cu12>=9.5.0 nvidia-cublas-cu12>=12.8.0 nvidia-curand-cu12>=10.3.7 nvidia-cusolver-cu12>=11.7.1 nvidia-cusparse-cu12>=12.6.0 nvidia-cufft-cu12>=11.3.0
-
-# Build xformers from source
+# Build xformers from source in the UV environment
 echo ""
 echo "Building xformers from source for SM 120 support..."
 echo "This may take 15-30 minutes..."
@@ -69,41 +66,26 @@ export TORCH_CUDA_ARCH_LIST='12.0+PTX'
 export FORCE_CUDA=1
 export MAX_JOBS=4
 
-# Clone and build xformers
-if [ -d "xformers_build" ]; then
-    rm -rf xformers_build
-fi
-git clone https://github.com/facebookresearch/xformers.git xformers_build
-cd xformers_build
-git checkout v0.0.30
-pip install -r requirements.txt
-pip install -e .
-cd ..
+# Use UV to run the xformers build script
+uv run python build_xformers.py
 
-# Install remaining dependencies
-echo ""
-echo "Installing remaining dependencies..."
-pip install -r requirements_rtx5090.txt
-
-# Create optimized launch script
+# Create optimized launch script that uses UV
 echo ""
 echo "Creating optimized launch script..."
 cat > launch_rtx5090.sh << 'EOF'
 #!/bin/bash
 
-# RTX 5090 optimized launch script for Fooocus
-
-# Activate virtual environment
-source venv_rtx5090/bin/activate
+# RTX 5090 optimized launch script for Fooocus using UV
 
 # Set environment variables for optimal performance
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 export CUDA_VISIBLE_DEVICES=0
 export TORCH_CUDNN_V8_API_ENABLED=1
 export CUDA_MODULE_LOADING=LAZY
+export USE_RTX5090=true
 
-# Launch Fooocus with RTX 5090 optimizations
-python launch.py \
+# Launch Fooocus with RTX 5090 optimizations using UV
+uv run python launch.py \
     --xformers \
     --opt-sdp-attention \
     --no-half-vae \
@@ -114,18 +96,10 @@ EOF
 
 chmod +x launch_rtx5090.sh
 
-# Test GPU detection
+# Test GPU detection using UV
 echo ""
 echo "Testing GPU detection..."
-python -c "
-import torch
-print(f'PyTorch version: {torch.__version__}')
-print(f'CUDA available: {torch.cuda.is_available()}')
-if torch.cuda.is_available():
-    print(f'CUDA version: {torch.version.cuda}')
-    print(f'GPU: {torch.cuda.get_device_name(0)}')
-    print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB')
-"
+uv run python test_gpu.py
 
 echo ""
 echo "==================================================="
@@ -134,7 +108,8 @@ echo ""
 echo "To run Fooocus with RTX 5090 optimizations:"
 echo "  ./launch_rtx5090.sh"
 echo ""
-echo "Or activate the environment manually:"
-echo "  source venv_rtx5090/bin/activate"
-echo "  python launch.py"
+echo "Or use UV directly:"
+echo "  uv run python launch.py"
+echo ""
+echo "UV has created a .venv directory with all dependencies."
 echo "==================================================="

@@ -34,10 +34,16 @@ classifiers = [
 [project.scripts]
 fooocus = "launch:main"
 
+[project.dependencies]
+# Read from requirements file
+# UV will handle these during sync
+
 [tool.uv]
-index = [
-    {name = "pytorch-nightly", url = "https://download.pytorch.org/whl/nightly/cu128"},
-]
+constraint-dependencies = ["requirements_rtx5090.txt"]
+
+[[tool.uv.index]]
+name = "pytorch-nightly"
+url = "https://download.pytorch.org/whl/nightly/cu128"
 
 [tool.uv.sources]
 torch = {index = "pytorch-nightly"}
