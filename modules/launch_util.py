@@ -81,7 +81,7 @@ def run_pip(command, desc=None, live=default_command_live):
     
     try:
         index_url_line = f' --index-url {index_url}' if index_url != '' else ''
-        return run(f'uv pip {command} --prefer-binary{index_url_line}', desc=f"Installing {desc}",
+        return run(f'uv pip {command}{index_url_line}', desc=f"Installing {desc}",
                    errdesc=f"Couldn't install {desc}", live=live)
     except Exception as e:
         print(e)

@@ -1,8 +1,7 @@
 # PyTorch with CUDA 12.8 support for RTX 5090
---extra-index-url https://download.pytorch.org/whl/nightly/cu128
-torch==2.9.0.dev20250726+cu128
-torchvision==0.21.0.dev20250726+cu128
-torchaudio==2.9.0.dev20250726+cu128
+torch>=2.9.0.dev20250726+cu128
+torchvision>=0.24.0.dev20250726+cu128
+torchaudio>=2.8.0.dev20250726+cu128
 
 # CUDA 12.8 runtime libraries
 nvidia-cuda-runtime-cu12>=12.8.0
@@ -41,3 +40,4 @@ packaging==24.1
 rembg==2.0.57
 groundingdino-py==0.4.0
 segment_anything==1.0
+supervision>=0.6.0

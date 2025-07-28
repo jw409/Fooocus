@@ -27,6 +27,15 @@ TRY_INSTALL_XFORMERS = False
 
 
 def prepare_environment():
+    # First check: Ensure we're in a virtual environment
+    if sys.prefix == sys.base_prefix:
+        print("\n" + "="*60)
+        print("ERROR: Not running in a virtual environment!")
+        print("Please activate your virtual environment first.")
+        print("For example: source .venv/bin/activate")
+        print("="*60 + "\n")
+        sys.exit(1)
+    
     # Check UV is available first
     if not is_uv_available():
         print("\n" + "="*60)
@@ -53,26 +62,19 @@ def prepare_environment():
     print(f"Python {sys.version}")
     print(f"Fooocus version: {fooocus_version.version}")
 
-    if REINSTALL_ALL or not is_installed("torch") or not is_installed("torchvision"):
-        run(torch_command, "Installing torch and torchvision", "Couldn't install torch", live=True)
-
-    if TRY_INSTALL_XFORMERS:
-        if REINSTALL_ALL or not is_installed("xformers"):
-            xformers_package = os.environ.get('XFORMERS_PACKAGE', 'xformers==0.0.23')
-            if platform.system() == "Windows":
-                if platform.python_version().startswith("3.10"):
-                    run_pip(f"install -U -I --no-deps {xformers_package}", "xformers", live=True)
-                else:
-                    print("Installation of xformers is not supported in this version of Python.")
-                    print(
-                        "You can also check this and build manually: https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Xformers#building-xformers-on-windows-by-duckness")
-                    if not is_installed("xformers"):
-                        exit(0)
-            elif platform.system() == "Linux":
-                run_pip(f"install -U -I --no-deps {xformers_package}", "xformers")
-
-    if REINSTALL_ALL or not requirements_met(requirements_file):
-        run_pip(f"install -r \"{requirements_file}\"", "requirements")
+    # Check if we're in a virtual environment
+    if sys.prefix == sys.base_prefix:
+        print("\n" + "="*60)
+        print("ERROR: Not running in a virtual environment!")
+        print("Please activate your virtual environment first.")
+        print("For example: source .venv/bin/activate")
+        print("="*60 + "\n")
+        sys.exit(1)
+    
+    # Skip all automatic dependency installation
+    # Dependencies should be managed manually
+    print("Running in venv:", sys.prefix)
+    print("Skipping automatic dependency installation (managed manually for RTX 5090)")
 
     return
 
